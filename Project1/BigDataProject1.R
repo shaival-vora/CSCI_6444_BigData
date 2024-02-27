@@ -203,29 +203,54 @@ agraph3.np
 # Analyzing the degree distribution helps in understanding the overall structure of the network
 hist(igraph:: degree(agraph3))
 
+# By generating random graphs and converting them into adjacency matrices, you can gain insights into the structural properties of graphs.
+# Making the dataset smaller to get some more visibility
 bgraph = sna:: rgraph(25,1,0.2,"graph",FALSE)
 bgraph.adj <- igraph::graph_from_adjacency_matrix(bgraph, mode = "undirected")
 bgraph.adj
-
 plot(bgraph.adj)
 
 # Notice the difference between density with and without loop consideration as the link factor decreases.
-
+# Edge density is defined as the ratio of the number of edges present in the graph to the total number of possible edges.
+# It quantifies how densely the nodes in the graph are connected to each other.
+# Calculating edge density with and without loops allows you to understand how self-edges affect the overall connectivity of the graph.
 igraph::edge_density(bgraph.adj)
+# This line calculates the edge density of the graph, considering loops (self-edges) as well.
+# By setting loops = TRUE, the function includes self-edges when calculating edge density.
 igraph::edge_density(bgraph.adj,loops = T)
 
 # Find the diameter of bgraph
+# The diameter of a graph is defined as the maximum shortest path length between any pair of vertices in the graph. 
 bgraph.d = igraph::diameter(bgraph.adj)
 bgraph.d
 
-# Find the max-cliques for node 13:
+# Find the max-cliques for node 13(any random node):
+# The max_cliques() function from the igraph package is used to find the maximal cliques in the graph.
+# Maximal cliques are complete subgraphs (subsets of nodes) in which every pair of nodes is connected by an edge,
+# and no additional node can be added to the subset while maintaining this property.
 node <- c(13)
 bgraph.13clique = igraph::max_cliques(bgraph.adj,min = NULL, max = NULL, subset = node)
 bgraph.13clique
 
 # Find the largest clique
+# The largest clique in a graph represents the largest subset of nodes where every node is connected to every other node within the subset.
+# Finding the size of the largest clique provides insights into the maximum level of connectivity within the graph
 bgraph.largestClique = igraph::clique_num(bgraph.adj)
 bgraph.largestClique
+
+# Simplify function
+sg <- simplify(g)
+is_simple(sg)
+
+# Detecting structures using walktrap.community()
+wc <- cluster_walktrap(agraph3)
+plot(wc,g, vertex.size = 5, vertex.label.cex = 0.2, edge.arrow.size = 0.1, layout = layout.fruchterman.reingold)
+
+# Alpha Centrality
+# Alpha centrality measures the extent to which a node's neighbors are influenced by the node itself.
+acg <- alpha_centrality(agraph3)
+sort(acg, decreasing = TRUE)
+
 
 
 # ---------------------------------------------------------------------------------------
@@ -234,17 +259,19 @@ bgraph.largestClique
 
 # (a) central nodes
 # We can find the central node in two ways, either based on the sum of in and out degree or based on the node with the highest betweenness.
-most_central <- which.max(igraph:: degree(agraph3, mode = "all"))
+# Identifying the most central node in a graph can provide insights into its structure and functioning.
+most_central <- which.max(igraph:: degree(g, mode = "all"))
 most_central
 
-between <- betweenness(agraph2)
+between <- igraph:: betweenness(g)
 most_central <- which.max(between)
 most_central
 
-# (b) longest path(s)
-# 
-longestPath <- induced_subgraph(agraph3, get_diameter(agraph3))
-plot(longestPath)
+# (b) longest path(s) 
+sg = induced_subgraph(g, which(igraph::components(g) $membership == 1))
+V(sg)$degree = igraph::degree(sg)
+result = dfs(sg, root = 1, dist = TRUE)$dist
+sort(result, decreasing = TRUE)
 
 # (c) largest clique(s)
 largest_cliques(agraph3)
@@ -253,6 +280,6 @@ largest_cliques(agraph3)
 ego.graph = igraph::ego(agraph3)
 ego.graph
 
-# (e) power centrality. 
+ # (e) power centrality. 
 powerCentrality <- power_centrality(agraph3)
 powerCentrality
